@@ -33,14 +33,14 @@ function getIp(req: Request) {
   const forwarded = req.get("x-forwarded-for")?.split(",")[0];
   const forwardedHeader = req.get("forwarded")?.split(",")[0]?.split(";").find((part) => part.trim().toLowerCase().startsWith("for="))?.split("=")[1];
   const candidates = [
-    // Express has already resolved this through the trusted Replit proxy.
-    // Prefer it over a client-supplied header to avoid accepting a spoofed IP.
-    req.ip,
+    // Render and Replit pass the public visitor address through their trusted
+    // proxy headers. Express can otherwise expose the platform's private hop.
+    forwarded,
+    forwardedHeader,
     req.get("cf-connecting-ip"),
     req.get("true-client-ip"),
     req.get("x-real-ip"),
-    forwardedHeader,
-    forwarded,
+    req.ip,
     req.socket.remoteAddress,
   ];
   return candidates.map(normalizeIp).find(Boolean) ?? "unknown";
