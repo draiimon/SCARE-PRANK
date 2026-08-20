@@ -6,6 +6,10 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", service: "SCARE-PRANK API" });
+});
+
 // The app is served behind Replit's reverse proxy. Trusting the proxy lets
 // Express resolve the original client address from forwarded headers.
 app.set("trust proxy", true);
