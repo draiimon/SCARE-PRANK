@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Visitor Security Dashboard"
+description = "A privacy-conscious visitor access monitor for a site owner. Records first-party security events, repeat visits, device details, and approximate network information in a protected dashboard."
+version = "1.0.0"
+id = "artifacts/visitor-security-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25838
+
+[services.development]
+run = "pnpm --filter @workspace/visitor-security-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/visitor-security-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/visitor-security-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25838"
+BASE_PATH = "/"

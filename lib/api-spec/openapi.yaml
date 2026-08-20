@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: visitors
+    description: Visitor access monitoring
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /visits:
+    post:
+      operationId: recordVisit
+      tags: [visitors]
+      summary: Record a public site visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisitInput"
+      responses:
+        "201":
+          description: Visit recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [visitors]
+      summary: Get dashboard summary
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /visitors:
+    get:
+      operationId: listVisitors
+      tags: [visitors]
+      summary: List visitors
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Visitor profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Visitor"
+  /visitors/{visitorId}:
+    get:
+      operationId: getVisitor
+      tags: [visitors]
+      summary: Get visitor activity
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: visitorId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Visitor activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisitorDetail"
+        "404":
+          description: Visitor not found
+  /blocks:
+    post:
+      operationId: createBlock
+      tags: [visitors]
+      summary: Block an IP address
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockInput"
+      responses:
+        "201":
+          description: Block created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+    delete:
+      operationId: removeBlock
+      tags: [visitors]
+      summary: Unblock an IP address
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: ip
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Block removed
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    VisitInput:
+      type: object
+      properties:
+        visitorId:
+          type: string
+          minLength: 8
+        path:
+          type: string
+        referrer:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        screenSize:
+          type: ["string", "null"]
+        timezone:
+          type: ["string", "null"]
+        language:
+          type: ["string", "null"]
+      required: [visitorId, path]
+    Visit:
+      type: object
+      required: [id, visitorId, ipAddress, path, timestamp, device, browser]
+      properties:
+        id: { type: number }
+        visitorId: { type: string }
+        ipAddress: { type: string }
+        path: { type: string }
+        timestamp: { type: string, format: date-time }
+        device: { type: string }
+        browser: { type: string }
+        os: { type: string }
+        referrer: { type: ["string", "null"] }
+        screenSize: { type: ["string", "null"] }
+        timezone: { type: ["string", "null"] }
+        language: { type: ["string", "null"] }
+        country: { type: ["string", "null"] }
+        region: { type: ["string", "null"] }
+        city: { type: ["string", "null"] }
+        latitude: { type: ["string", "null"] }
+        longitude: { type: ["string", "null"] }
+        isp: { type: ["string", "null"] }
+    Visitor:
+      type: object
+      required: [visitorId, ipAddress, firstSeen, lastSeen, visits, device, browser]
+      properties:
+        visitorId: { type: string }
+        ipAddress: { type: string }
+        firstSeen: { type: string, format: date-time }
+        lastSeen: { type: string, format: date-time }
+        visits: { type: number }
+        device: { type: string }
+        browser: { type: string }
+        os: { type: string }
+        location: { type: string }
+        isBlocked: { type: boolean }
+        country: { type: ["string", "null"] }
+        region: { type: ["string", "null"] }
+        city: { type: ["string", "null"] }
+        latitude: { type: ["string", "null"] }
+        longitude: { type: ["string", "null"] }
+        isp: { type: ["string", "null"] }
+    VisitorDetail:
+      type: object
+      required: [visitor, activity]
+      properties:
+        visitor:
+          $ref: "#/components/schemas/Visitor"
+        activity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Visit"
+    Dashboard:
+      type: object
+      required: [totalVisits, uniqueVisitors, repeatVisitors, blockedIps, recentActivity, dailyVisits]
+      properties:
+        totalVisits: { type: number }
+        uniqueVisitors: { type: number }
+        repeatVisitors: { type: number }
+        blockedIps: { type: number }
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Visit"
+        dailyVisits:
+          type: array
+          items:
+            type: object
+            required: [date, visits]
+            properties:
+              date: { type: string }
+              visits: { type: number }
+    BlockInput:
+      type: object
+      required: [ip]
+      properties:
+        ip: { type: string, minLength: 3 }
+    Block:
+      type: object
+      required: [ip, createdAt]
+      properties:
+        ip: { type: string }
+        createdAt: { type: string, format: date-time }
+

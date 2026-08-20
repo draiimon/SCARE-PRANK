@@ -1,0 +1,2 @@
+- [Visitor monitoring boundaries](visitor-monitoring.md) — keep access logging evidence-oriented; never treat IP data as proof of identity.
+- [Managed database environment](managed-database-environment.md) — artifact workflows may expose PG* variables instead of DATABASE_URL; support both connection modes.
