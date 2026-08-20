@@ -1,14 +1,15 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "node:path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
-
-app.get("/", (_req, res) => {
-  res.json({ status: "ok", service: "SCARE-PRANK API" });
-});
+const frontendRoot = path.resolve(
+  import.meta.dirname,
+  "../../visitor-security-dashboard/dist/public",
+);
 
 // The app is served behind Replit's reverse proxy. Trusting the proxy lets
 // Express resolve the original client address from forwarded headers.
@@ -38,5 +39,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+app.use(express.static(frontendRoot));
+app.use((req, res, next) => {
+  if (req.method === "GET" && !req.path.startsWith("/api")) {
+    res.sendFile(path.join(frontendRoot, "index.html"), (error) => {
+      if (error) next(error);
+    });
+    return;
+  }
+  next();
+});
 
 export default app;
