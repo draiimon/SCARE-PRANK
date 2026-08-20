@@ -71,6 +71,22 @@ export function PublicSite() {
   }, [scareActive]);
 
   useEffect(() => {
+    const unlockAudio = () => {
+      for (const audio of [scream.current, screamTwo.current]) {
+        if (!audio) continue;
+        audio.volume = 1;
+        void audio.play().then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+        }).catch(() => undefined);
+      }
+    };
+    const events = ["pointerdown", "keydown", "touchstart"];
+    events.forEach((event) => window.addEventListener(event, unlockAudio, { once: true }));
+    return () => events.forEach((event) => window.removeEventListener(event, unlockAudio));
+  }, []);
+
+  useEffect(() => {
     if (!scareActive) return;
     const timer = window.setInterval(() => {
       setScareIndex((current) => (current + 1) % scareImages.length);
@@ -101,12 +117,14 @@ export function PublicSite() {
     const audio = scream.current;
     if (audio) {
       audio.loop = true;
+      audio.volume = 1;
       audio.currentTime = 0;
       await audio.play().catch(() => undefined);
     }
     const secondAudio = screamTwo.current;
     if (secondAudio) {
       secondAudio.loop = true;
+      secondAudio.volume = 1;
       secondAudio.currentTime = 0;
       await secondAudio.play().catch(() => undefined);
     }
@@ -143,8 +161,8 @@ export function PublicSite() {
 
   return (
     <main ref={scareRoot} className={`hello-page${scareActive ? " is-scaring" : ""}`}>
-      <audio ref={scream} src="/scares/scream.mp3" preload="auto" loop />
-      <audio ref={screamTwo} src="/scares/scream-2.mp3" preload="auto" loop />
+      <audio ref={scream} src={`${import.meta.env.BASE_URL}scares/scream.mp3`} preload="auto" loop />
+      <audio ref={screamTwo} src={`${import.meta.env.BASE_URL}scares/scream-2.mp3`} preload="auto" loop />
       {scareActive && (
         <div className="scare-screen" aria-label="Full screen scare mode">
           <img src={scareImages[scareIndex]} alt="" />
